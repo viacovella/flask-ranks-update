@@ -1,46 +1,47 @@
-from pydantic import BaseModel, Typing, EmailStr
+from pydantic import BaseModel, Field, EmailStr, field_validator
+from typing import Optional, List
 from datetime import datetime
 
-# Schemas for Teams
 
-class TeamBase(BaseModel):
-	shortname:str = Field(min_length = 8, max_length=8)
-	extendedname:Optional[str]
-	refemail:EmailStr
-
-	
-	@field_validator('shortname')
-	def validate_username(cls, v:str) -> str:
-		if not len(v)==8:
-			raise ValueError('shortname must be 8 characters long')
-		if not v.isalnum():
-			raise ValueError('shortname must be alphanumeric')
-			
-		return v.lower()
-		
-class TeamCreate(TeamBase):
-	pass
-	
-class TeamUpdate(TeamBase):
-	shortname:str = Field(None)
-	extendedname:Optional[str]
-	refemail:Optional[EmailStr]
-	
-class TeamRead(TeamBase):
-	id: int 
-	created_at: datetime
-	
-# Schemas for Submissions
+# Submission Schemas
 
 class SubmissionBase(BaseModel):
-	score:float=Field(gt=0,lt=100)
-	
-class SubmissionCreate(SubmissionBase):
-	pass
+    score: float = Field(gt=0, lt=100)
 
-class SubmissionUpdate(SubmissionBase):
-	score:Optional[float]
-	
+class SubmissionCreate(SubmissionBase):
+    pass
+
 class SubmissionRead(SubmissionBase):
-	id:int 
-	created_at:datetime
+    id: int
+    sent_at: datetime
+    team_id: int 
+
+    class Config:
+        from_attributes = True 
+
+# Team Schemas
+
+class TeamBase(BaseModel):
+    shortname: str = Field(min_length=8, max_length=8)
+    extendedname: Optional[str] = None
+    refemail: EmailStr
+
+    @field_validator('shortname')
+    def validate_shortname(cls, v: str) -> str:
+        if not v.isalnum():
+            raise ValueError('shortname must be alphanumeric')
+        return v.lower()
+
+class TeamCreate(TeamBase):
+    pass
+
+class TeamRead(TeamBase):
+    id: int
+    
+    class Config:
+        from_attributes = True
+
+# TeamWithSubmission
+
+class TeamWithSubmissions(TeamRead):
+    submissions: List[SubmissionRead] = [] 
