@@ -18,3 +18,11 @@ def get_db():
         yield db
     finally:
         db.close()
+        
+# endpoint for teams
+@app.get("/teams/", response_model=List[schemas.TeamRead])
+
+def read_teams(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+
+    teams = db.query(models.Team).offset(skip).limit(limit).all()
+    return teams
